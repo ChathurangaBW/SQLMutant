@@ -1,100 +1,201 @@
-# BHEH's SQLMutant
 
-<p align="center">
-<a href="https://www.blackhatethicalhacking.com"><img src="https://www.blackhatethicalhacking.com/wp-content/uploads/2022/06/BHEH_logo.png" width="300px" alt="BHEH"></a>
-</p>
+# SQLMutant.sh
 
-<p align="center">
+**Version:** 2.0  
+**Author:** Chris 'SaintDruG' Abou-Chabké  
+**Repository:** [GitHub: blackhatethicalhacking/SQLMutant](https://github.com/blackhatethicalhacking/SQLMutant)  
+**Purpose:** Automated SQL Injection Testing Tool for Ethical Hacking and Security Assessments.
 
-**Unleash the power of mutation testing on SQL queries with SQLMutant.**
+SQLMutant is a powerful automated tool that helps identify and exploit SQL injection vulnerabilities on target domains. It fetches URLs, filters them for potential injection points, and runs SQLMap to perform aggressive testing.
 
-SQLMutant is written by Chris "SaintDruG" Abou-Chabke from Black Hat Ethical Hacking and is designed for Red Teams and Bug Bounty Hunters!
-</p>
+**Disclaimer**: This tool is intended for **authorized** security testing **only**. Unauthorized use of this tool on websites without proper authorization is illegal and unethical.
 
-Modded by ShadowDev aka Wishmaster
+---
 
-<a href="https://www.buymeacoffee.com/notarealdev" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me A Coffee" style="height: 40px !important;width: 145px !important;" ></a>
+## Features
 
-# Description
+- **Automated SQL Injection Testing**: Fetch URLs, filter for potential SQL injection points, and test with SQLMap.
+- **Supports Multiple Tools**: Integrates with `waybackurls`, `Arjun`, `httpx`, `sqlmap`, and more.
+- **Virtual Environment Setup**: Ensures isolated Python dependencies using `virtualenv`.
+- **Command-Line Arguments**: Allows customization for domain input, thread count, proxy settings, and authentication tokens.
+- **Enhanced Error Handling**: Exits on errors and provides meaningful error messages.
+- **Flexible Output**: Generates logs and saves SQLMap results in a dedicated output directory.
+- **Proxy and Authentication Support**: Optional support for scanning via proxies and authenticated endpoints.
 
-SQLMutant will search for automated subdomain enumeration and SQL injection testing, utilizing several tools including waybackurls, httpx, Arjun, and sqlmap. It begins with a Sun Tzu quote and checks if the user is connected to the internet. Then it prompts the user to enter a domain to scan and creates a directory for the output files. It fetches URLs from Wayback Machine and filters them using HTTPX, and informs the user about the number of URLs found. Then it finds more parameters using Arjun with 20 threads and extracts URLs with parameters from Arjun's output. The script merges the URLs found by Arjun with the ones ready for SQL injection and informs the user about the new number of URLs ready for SQL injection testing. Finally, it tests SQL injection on the new list of URLs using SQLMAP with a tweaked aggressive approach.
+---
 
-# The Flow Behind it
+## Table of Contents
 
-- Displays an ASCII art and a random quote by Sun Tzu related to offensive security.
-- Asks the user for the domain to scan.
-- Checks if the user is connected to the internet. If not, it prompts the user to connect before running the script.
-- Creates a directory for the output files.
-- Fetches URLs from Wayback Machine and filters them using HTTPX, then saves the results to the all_urls.txt file.
-- Filters the URLs from all_urls.txt that are ready for SQL injection testing by applying magic regex patterns, and saves the results to the sql_ready_urls.txt file.
-- Runs Arjun with 20 threads to find more parameters.
-- Extracts URLs with parameters from Arjun's output and saves them to the arjun_urls.txt file.
-- Merges the URLs found by Arjun with the ones ready for SQL injection, and saves the results to the sql_ready_urls2.txt file.
-- Tests SQL injection on the URLs in sql_ready_urls2.txt using SQLMAP with a tweaked aggressive approach.
+1. [Requirements](#requirements)
+2. [Installation](#installation)
+3. [Usage](#usage)
+4. [Command-Line Options](#command-line-options)
+5. [How It Works](#how-it-works)
+6. [Log Files and Output](#log-files-and-output)
+7. [Ethical Use and Disclaimer](#ethical-use-and-disclaimer)
+8. [Contributing](#contributing)
+9. [License](#license)
 
-# Features:
+---
 
-- URL Fuzzer: This feature allows the user to specify a target URL and then perform a fuzzing attack to find any vulnerable parameters that can be exploited for SQL injection. SQLMutant uses a variety of techniques to detect SQL injection vulnerabilities, including time-based blind injection, error-based injection, and boolean-based injection.
+## Requirements
 
-- SQL Payloads: SQLMutant provides a set of pre-defined SQL injection payloads that can be used to test for vulnerabilities. The payloads are designed to exploit different types of SQL injection vulnerabilities, including union-based, error-based, boolean-based, and time-based attacks.
+### System Requirements
+- Linux or macOS
+- Basic understanding of shell scripting and penetration testing
 
-- Header Fuzzer: This feature allows the user to fuzz HTTP headers in order to test for SQL injection vulnerabilities. The tool provides a set of pre-defined payloads that can be used to test for different types of injection attacks.
+### Dependencies
+The script automatically checks for the following dependencies and installs them if missing:
+- `lolcat`
+- `figlet`
+- `curl`
+- `toilet`
+- `virtualenv`
+- `jq`
+- `wget`
+- `go`
+- `pip3`
+- `git`
+- `python3`
 
-- Data Fuzzer: This feature allows the user to test for SQL injection vulnerabilities in form data submitted by the user. The tool can be used to test for vulnerabilities in both POST and GET requests.
+Tools installed by the script:
+- **SQLMap**
+- **Arjun**
+- **waybackurls**
+- **httpx**
+- **uro**
 
-- Waybackurls Integration: SQLMutant has integrated the Waybackurls tool, which is used to find historical versions of a web page. This feature can be used to find pages that are no longer available but may contain vulnerabilities that were present in the past. The tool can also be used to find additional pages on the target website that may be vulnerable to SQL injection attacks.
+---
 
-- Arjun Integration: SQLMutant also integrates the Arjun tool, which is used to find hidden parameters and directories on a web server. This feature can be used to find additional pages on the target website that may be vulnerable to SQL injection attacks.
+## Installation
 
-Well Features also when you are fighting mutants:
+### Step 1: Clone the Repository
 
-![giphy-2](https://user-images.githubusercontent.com/13942386/220472297-df381eaf-b323-4e9c-ad7d-3148c7ff167f.gif)
+Clone the SQLMutant repository from GitHub:
 
+```bash
+git clone https://github.com/blackhatethicalhacking/SQLMutant.git
+cd SQLMutant
+```
 
-# Requirements:
+### Step 2: Make the Script Executable
 
-To use SQLMutant, you need to have the following tools installed:
+Make the script executable:
 
-NADA, took care of this with pre - install script.
-Blackhat is good about pushing commits, so the main branch should be updated soon!
+```bash
+chmod +x SQLMutant.sh
+```
 
-# Installation
+### Step 3: Run the Script with the Required Arguments
 
-`git clone https://github.com/blackhatethicalhacking/SQLMutant.git`
+You can now run SQLMutant on a target domain:
 
-`cd SQLMutant`
+```bash
+./SQLMutant.sh -d example.com
+```
 
-`chmod +x SQLMutant.sh`
+---
 
-`./SQLMutant.sh`
+## Usage
 
-# Screenshot
+### Basic Usage
 
-**Main Menu**
+```bash
+./SQLMutant.sh -d example.com
+```
 
-<img width="959" alt="Screenshot 2023-02-17 at 4 16 43 PM" src="https://user-images.githubusercontent.com/13942386/219679544-4591872f-6257-4ba4-928a-390c75837f0a.png">
+This command will:
+1. Fetch URLs related to the target domain from the Wayback Machine.
+2. Filter URLs for potential SQL injection points.
+3. Run SQLMap on the filtered URLs with aggressive settings.
 
+### Advanced Usage with Options
 
-# Compatibility: 
+```bash
+./SQLMutant.sh -d example.com -t 20 -p http://proxyserver:8080 -a your_auth_token
+```
 
-This tool has been tested on Kali Linux, Ubuntu and MacOS.
+- **`-d example.com`**: Specifies the domain to scan.
+- **`-t 20`**: Sets the number of threads for multi-threading (default is 10).
+- **`-p http://proxyserver:8080`**: Runs the scan through the specified proxy server.
+- **`-a your_auth_token`**: Includes an authentication token for authenticated endpoints.
 
-# Disclaimer
+---
 
-This tool is provided for educational and research purpose only. The author of this project are no way responsible for any misuse of this tool. 
-We use it to test under NDA agreements with clients and their consents for pentesting purposes and we never encourage to misuse or take responsibility for any damage caused !
+## Command-Line Options
 
-<h2 align="center">
-  <a href="https://store.blackhatethicalhacking.com/" target="_blank">BHEH Official Merch</a>
-</h2>
+| Option            | Description                                                                 |
+|-------------------|-----------------------------------------------------------------------------|
+| `-d`              | Target domain to scan (required).                                           |
+| `-t`              | Number of threads to use (default: 10).                                     |
+| `-p`              | Proxy server (e.g., `http://proxyserver:port`).                             |
+| `-a`              | Authentication token for scanning protected domains.                        |
+| `-h`              | Display help message and usage information.                                 |
 
-<p align="center">
-Introducing our Merch Store, designed for the Offensive Security community. Explore a curated collection of apparel and drinkware, perfect for both professionals and enthusiasts. Our selection includes premium t-shirts, hoodies, and mugs, each featuring bold hacking-themed slogans and graphics that embody the spirit of red teaming and offensive security. 
-Hack with style and showcase your dedication to hacker culture with gear that’s as dynamic and resilient as you are. 😊
-</p>
+---
 
-<p align="center">
+## How It Works
 
-<img src="https://github.com/blackhatethicalhacking/blackhatethicalhacking/blob/main/Merch_Promo.gif" width="540px" height="540">
-  </p>
+1. **Fetch URLs**: The script uses `waybackurls` to retrieve archived URLs for the target domain.
+2. **Filter URLs**: It filters URLs with potential query parameters using regular expressions and tools like `uro`.
+3. **Arjun for Parameter Discovery**: It runs `Arjun` to find hidden HTTP parameters.
+4. **Merge Results**: Merges all URLs and prepares them for SQL injection testing.
+5. **Run SQLMap**: Executes `SQLMap` with aggressive tamper scripts, bypass techniques, and optimizations to test for SQL injection vulnerabilities.
+6. **Results and Logging**: Saves SQLMap results and logs to a directory named after the target domain.
 
+---
+
+## Log Files and Output
+
+- **Logs**: The script logs all output to `sqlmutant.log` in the target domain's directory.
+- **SQLMap Results**: SQLMap results are saved in the directory structure:
+  ```
+  [domain-name]/
+    ├── all_urls.txt
+    ├── urls_with_params.txt
+    ├── arjun_output.json
+    ├── sqlmap_input.txt
+    └── sqlmap_output/
+  ```
+
+You can review the SQLMap results in the `sqlmap_output` directory.
+
+---
+
+## Ethical Use and Disclaimer
+
+This tool is designed for **authorized** security testing **only**. Unauthorized testing of websites and systems without explicit permission is illegal and unethical. Always ensure that you have the right to perform security assessments on the target system.
+
+By using this tool, you agree to:
+
+- Only test systems where you have explicit permission.
+- Follow the responsible disclosure process when reporting vulnerabilities.
+- Adhere to ethical hacking practices.
+
+---
+
+## Contributing
+
+We welcome contributions from the security community! If you’d like to contribute to SQLMutant:
+
+1. Fork the repository.
+2. Create a new branch for your feature or fix.
+3. Submit a pull request with a detailed explanation of your changes.
+
+---
+
+## License
+
+**SQLMutant.sh** is released under the **MIT License**. You can freely use, modify, and distribute this tool as long as you include the original license.
+
+---
+
+## Author and Contact
+
+Developed by **Chris 'SaintDruG' Abou-Chabké** with ❤️ for the **blackhatethicalhacking.com** community.
+
+If you have questions or suggestions, feel free to open an issue on GitHub or reach out via the [GitHub repository](https://github.com/blackhatethicalhacking/SQLMutant).
+
+---
+
+**Thank you for using SQLMutant! Happy ethical hacking!**
